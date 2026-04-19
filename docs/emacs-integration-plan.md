@@ -12,6 +12,15 @@ fff.nvim are un backend Rust de înaltă calitate (`fff-core`) izolat de fronten
 
 **MCP nu necesită nicio modificare** — `fff-mcp` funcționează deja ca subprocess și se conectează la orice client MCP din Emacs (`gptel`, `mcp.el`).
 
+### Punct de pornire: JonasThowsen/fff.el
+
+**⚠️ Nu pornim de la zero.** Există deja o implementare funcțională:
+- **Repo**: https://github.com/JonasThowsen/fff.el
+- **Ce face**: FFI direct la `libfff_c` + `consult` UI (`fff-find-file`, `fff-grep`, `fff-grep-fuzzy`), distribuit ca Nix flake, activ la 2026-04-15
+- **Problema identificată**: struct offsets hardcodate (`offset 0, 8, 32, 104, 120`) — risc de mismatch silențios la fiecare upgrade upstream
+- **Plan**: fork → fix struct offsets via `cbindgen` generat automat → PR înapoi la Jonas (codul e al lui, fix-ul îi aparține)
+- **Etică**: menționăm explicit autorul în orice derivat, nu preluăm fără credit
+
 ---
 
 ## 0. Clarificare esențială: fff în Neovim NU se integrează în Telescope
