@@ -1,6 +1,6 @@
 # Plan de implementare: fff.el — Suport Emacs pentru fff.nvim
 
-> **Status**: Draft tehnic v1.0  
+> **Status**: Draft tehnic v1.1  
 > **Audiență**: Contribuitori Rust + Emacs Lisp  
 > **Bază de cod analizată**: `dmtrKovalenko/fff.nvim` @ `2465c2ca`
 
@@ -11,6 +11,40 @@
 fff.nvim are un backend Rust de înaltă calitate (`fff-core`) izolat de frontend-ul Neovim. Calea optimă pentru Emacs este un **Emacs dynamic module** implementat într-un nou crate Rust `crates/fff-emacs`, care folosește crate-ul [`emacs`](https://crates.io/crates/emacs) (echivalentul `mlua` din lumea Emacs). Deasupra acestuia se construiește un pachet Emacs Lisp `fff.el` care se integrează nativ cu ecosistemul `consult`/`vertico`/`embark`.
 
 **MCP nu necesită nicio modificare** — `fff-mcp` funcționează deja ca subprocess și se conectează la orice client MCP din Emacs (`gptel`, `mcp.el`).
+
+---
+
+## 0. Clarificare esențială: fff în Neovim NU se integrează în Telescope
+
+> Această secțiune există pentru a evita o greșeală de design frecventă.
+
+O presupunere naturală este că fff.nvim funcționează ca un backend pentru Telescope sau `vim.ui.select` — adică se integrează în tooling-ul de completion existent din Neovim. **Presupunerea e greșită.**
+
+`picker_ui.lua` are **97KB** de cod — fff are propria interfață grafică completă: floating window, renderer, scrollbar, highlighting, preview panel, keybindings proprii. Este un picker standalone, ca Telescope însuși, nu un backend pentru Telescope.
+
+```
+Neovim: fff = UI custom 97KB  +  backend Rust (fff-core)
+                 ↑
+        construit de la zero,
+        fără vim.ui.select, fără Telescope
+```
+
+### De ce Emacs e diferit — și mai bun în acest caz
+
+Emacs are un contract standardizat: **`completing-read`**. Orice funcție care returnează candidați prin `completing-read` este interceptată automat de framework-ul de completion instalat de utilizator:
+
+| Dacă utilizatorul are | Primește automat |
+|---|---|
+| `vertico` | UI vertical cu preview |
+| `ivy` | UI ivy cu acțiuni |
+| `helm` | UI helm cu secțiuni |
+| `marginalia` | adnotări (frecency, git status) în coloana dreaptă |
+| `embark` | acțiuni (open, copy-path, git-diff, grep-in-dir) via `C-;` |
+| `consult` | source async cu narrowing și preview live |
+
+**Concluzie**: pentru Emacs NU construim UI. Contribuția noastră este exclusiv backend-ul Rust (scoring Smith-Waterman, frecency LMDB, git status, query parser). UI-ul vine gratis din stack-ul deja instalat al utilizatorului.
+
+Această abordare este idiomatică în Emacs (ex: `consult-fd` = `fd` subprocess + `completing-read`, zero UI propriu) și produce o integrare superioară celei din Neovim — utilizatorul nu trebuie să reînvețe keybindings, acțiunile embark funcționează imediat, marginalia afișează scorurile fff automat.
 
 ---
 
