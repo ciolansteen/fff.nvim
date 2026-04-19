@@ -19,6 +19,12 @@
 //!
 //! (ffi-get-c-string (fff--grep-match-line-content match-ptr))
 //! ```
+//!
+//! # Array iteration
+//!
+//! To walk result arrays use `fff_search_result_get_item`,
+//! `fff_grep_result_get_match`, and `fff_search_result_get_score` — these are
+//! defined in the main `lib.rs` FFI surface alongside the search functions.
 
 use std::ffi::c_char;
 use std::ptr;
@@ -289,6 +295,49 @@ pub unsafe extern "C" fn fff_grep_match_get_total_frecency_score(
     unsafe { (*m).total_frecency_score }
 }
 
+/// Returns the access-based frecency score for the matched file.
+/// Returns `0` if `m` is null.
+///
+/// ## Safety
+/// `m` must be a valid `FffGrepMatch` pointer or null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn fff_grep_match_get_access_frecency_score(
+    m: *const FffGrepMatch,
+) -> i64 {
+    if m.is_null() {
+        return 0;
+    }
+    unsafe { (*m).access_frecency_score }
+}
+
+/// Returns the modification-based frecency score for the matched file.
+/// Returns `0` if `m` is null.
+///
+/// ## Safety
+/// `m` must be a valid `FffGrepMatch` pointer or null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn fff_grep_match_get_modification_frecency_score(
+    m: *const FffGrepMatch,
+) -> i64 {
+    if m.is_null() {
+        return 0;
+    }
+    unsafe { (*m).modification_frecency_score }
+}
+
+/// Returns the last-modified time as seconds since the UNIX epoch for the matched file.
+/// Returns `0` if `m` is null.
+///
+/// ## Safety
+/// `m` must be a valid `FffGrepMatch` pointer or null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn fff_grep_match_get_modified(m: *const FffGrepMatch) -> u64 {
+    if m.is_null() {
+        return 0;
+    }
+    unsafe { (*m).modified }
+}
+
 /// Returns the number of highlight ranges in this match. Returns `0` if `m` is null.
 ///
 /// Use with [`fff_grep_match_get_match_range`] to iterate the highlight spans.
@@ -509,8 +558,8 @@ pub unsafe extern "C" fn fff_grep_result_get_count(r: *const FffGrepResult) -> u
     unsafe { (*r).count }
 }
 
-/// Returns the total number of matches found (always equal to `count` for
-/// non-paginated results). Returns `0` if `r` is null.
+/// Returns the total number of matches found across all pages.
+/// Returns `0` if `r` is null.
 ///
 /// ## Safety
 /// `r` must be a valid `FffGrepResult` pointer or null.
@@ -533,6 +582,32 @@ pub unsafe extern "C" fn fff_grep_result_get_total_files_searched(r: *const FffG
         return 0;
     }
     unsafe { (*r).total_files_searched }
+}
+
+/// Returns the total number of indexed files before any filtering.
+/// Returns `0` if `r` is null.
+///
+/// ## Safety
+/// `r` must be a valid `FffGrepResult` pointer or null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn fff_grep_result_get_total_files(r: *const FffGrepResult) -> u32 {
+    if r.is_null() {
+        return 0;
+    }
+    unsafe { (*r).total_files }
+}
+
+/// Returns the number of files eligible for search after path/type filtering.
+/// Returns `0` if `r` is null.
+///
+/// ## Safety
+/// `r` must be a valid `FffGrepResult` pointer or null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn fff_grep_result_get_filtered_file_count(r: *const FffGrepResult) -> u32 {
+    if r.is_null() {
+        return 0;
+    }
+    unsafe { (*r).filtered_file_count }
 }
 
 /// Returns the file offset for the next page, or `0` if all files have been
